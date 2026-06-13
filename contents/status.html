@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status - Minimal UI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        :root {
+            --bg-main: #000000;       
+            --bg-sidebar: #050505;    
+            --bg-card: #0a0a0a;       
+            --bg-card-hover: #121212; 
+            --text-primary: #ededed;  
+            --text-secondary: #a1a1a1;
+            --text-muted: #666666;    
+            --accent-color: #ffffff;  
+            --border-color: #1a1a1a;  
+            --sidebar-width: 280px;
+
+            /* 稼働状況用の追加カラー（デザインの邪魔をしないトーン） */
+            --color-success: #00e676;
+            --color-warning: #ffca28;
+            --color-danger: #ff5252;
+        }
+
+        body {
+            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", Meiryo, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            line-height: 1.6;
+            display: flex;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        #sidebar-toggle {
+            display: none;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            height: 100vh;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border-color);
+            position: fixed;
+            top: 0;
+            left: 0;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            transform: translateX(-100%);
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 100;
+        }
+
+        .sidebar-brand {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #ffffff;
+            padding-left: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .sidebar-heading {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            padding-left: 1rem;
+            margin-bottom: 0.75rem;
+            margin-top: 1.5rem;
+            font-weight: 700;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+        }
+
+        .sidebar-item {
+            position: relative;
+            margin-bottom: 0.15rem;
+        }
+
+        .sidebar-item.is-hidden {
+            display: none;
+        }
+
+        .sidebar-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            display: block;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.15s ease;
+        }
+
+        .sidebar-link:hover {
+            background-color: #0f0f0f;
+            color: var(--text-primary);
+        }
+
+        .sidebar-link.active {
+            background-color: #141414;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .sidebar-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 20%;
+            height: 60%;
+            width: 2px;
+            background-color: var(--accent-color);
+        }
+
+        .main-container {
+            margin-left: 0; 
+            flex-grow: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .top-header {
+            height: 64px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2.5rem;
+            position: sticky;
+            top: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(12px);
+            z-index: 80;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.15s ease;
+        }
+
+        .toggle-btn:hover {
+            border-color: #333;
+            color: var(--text-primary);
+            background-color: #0a0a0a;
+        }
+
+        .toggle-btn svg {
+            width: 16px;
+            height: 16px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+        }
+
+        .header-search-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .header-search-input {
+            background-color: #050505;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 0.45rem 2.2rem 0.45rem 0.75rem;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            font-family: inherit;
+            width: 220px;
+            transition: all 0.2s ease;
+        }
+
+        .header-search-input:focus {
+            outline: none;
+            border-color: #444;
+            background-color: #0a0a0a;
+            width: 260px; 
+        }
+
+        .header-search-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-clear-btn {
+            position: absolute;
+            right: 0.75rem;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.75rem;
+            display: none;
+        }
+        .search-clear-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .main-content {
+            padding: 5rem 2.5rem 8rem 2.5rem;
+            max-width: 900px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        section {
+            margin-bottom: 5.5rem;
+            scroll-margin-top: 6rem;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        section.is-hidden {
+            display: none;
+        }
+
+        .no-results-message {
+            display: none;
+            text-align: center;
+            padding: 4rem 0;
+            color: var(--text-secondary);
+        }
+
+        .section-badge {
+            display: inline-block;
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: #ffffff;
+            margin-bottom: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.35rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            color: #ffffff;
+            margin-top: 4rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        p {
+            margin-bottom: 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .lead-text {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            font-weight: 400;
+            margin-bottom: 3rem;
+            line-height: 1.7;
+        }
+
+        /* --- Status Page Elements --- */
+        .status-hero {
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-card);
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 3.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+
+        .status-indicator.operational { background-color: var(--color-success); box-shadow: 0 0 12px var(--color-success); }
+        .status-indicator.degraded { background-color: var(--color-warning); box-shadow: 0 0 12px var(--color-warning); }
+        .status-indicator.outage { background-color: var(--color-danger); box-shadow: 0 0 12px var(--color-danger); }
+
+        .status-hero-text {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        /* テーブルスタイル */
+        .status-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 2rem;
+        }
+
+        .status-table tr {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .status-table td {
+            padding: 1rem 0;
+            font-size: 0.95rem;
+        }
+
+        .status-table td.component-name {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .status-table td.component-status {
+            text-align: right;
+            font-size: 0.9rem;
+        }
+
+        .status-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-label.operational { color: var(--color-success); }
+        .status-label.degraded { color: var(--color-warning); }
+        .status-label.outage { color: var(--color-danger); }
+
+        /* タイムライン（履歴）スタイル */
+        .incident-history {
+            margin-top: 2rem;
+        }
+
+        .incident-day {
+            margin-bottom: 2.5rem;
+        }
+
+        .incident-date {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            letter-spacing: 0.03em;
+        }
+
+        .incident-item {
+            border-left: 1px solid var(--border-color);
+            padding-left: 1.25rem;
+            margin-left: 4px;
+        }
+
+        .incident-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .incident-update {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        .incident-update strong {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+
+        .no-incidents {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            padding: 1rem 0;
+        }
+
+        /* --- Navigation --- */
+        .page-navigation {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 6rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 2.5rem;
+        }
+
+        .nav-card {
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-card);
+            padding: 1.25rem;
+            border-radius: 8px;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            transition: all 0.2s ease;
+        }
+
+        .nav-card:hover {
+            border-color: #333;
+            background-color: var(--bg-card-hover);
+        }
+
+        .nav-card .label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .nav-card .title {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .nav-card.next {
+            text-align: right;
+            align-items: flex-end;
+        }
+
+        .nav-card.next .title {
+            color: #ffffff;
+        }
+
+        /* --- 8. サイドバー開閉CSS連動設定 --- */
+        .close-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 85; 
+            background: transparent;
+        }
+
+        #sidebar-toggle:checked ~ .sidebar {
+            transform: translateX(0);
+        }
+
+        #sidebar-toggle:checked ~ .main-container {
+            margin-left: var(--sidebar-width);
+        }
+
+        #sidebar-toggle:checked ~ .close-overlay {
+            display: block;
+        }
+
+        @media (max-width: 1024px) {
+            #sidebar-toggle:checked ~ .main-container {
+                margin-left: 0; 
+            }
+            #sidebar-toggle:checked ~ .sidebar {
+                box-shadow: 30px 0 60px rgba(0,0,0,0.9);
+            }
+            .top-header {
+                padding: 0 1.5rem;
+            }
+            .header-search-input {
+                width: 160px;
+            }
+            .header-search-input:focus {
+                width: 180px;
+            }
+            .main-content {
+                padding: 3rem 1.5rem 6rem 1.5rem;
+            }
+            .page-navigation {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <input type="checkbox" id="sidebar-toggle">
+
+    <label for="sidebar-toggle" class="close-overlay"></label>
+
+    <aside class="sidebar" id="sidebar-placeholder"></aside>
+
+    <div class="main-container">
+        
+        <header class="top-header" id="header-placeholder"></header>
+
+        <main class="main-content">
+
+            <div id="no-results" class="no-results-message">
+                <p>該当する情報が見つかりません。</p>
+            </div>
+
+            <section id="status">
+                <span class="section-badge">System / Availability</span>
+                <h1>Service Status</h1>
+                <p class="lead-text">現在のシステムの稼働状況および過去の運用履歴インシデントをお知らせします。</p>
+                
+                <div class="status-hero">
+                    <span class="status-indicator operational"></span>
+                    <span class="status-hero-text">すべてのシステムが正常に稼働しています。</span>
+                </div>
+
+                <h2>コンポーネントごとの状態</h2>
+                <table class="status-table">
+                    <tbody>
+                        <tr>
+                            <td class="component-name">API Service</td>
+                            <td class="component-status">
+                                <span class="status-label operational">
+                                    <span class="status-indicator operational"></span>稼働中
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="component-name">Web Application</td>
+                            <td class="component-status">
+                                <span class="status-label operational">
+                                    <span class="status-indicator operational"></span>稼働中
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="component-name">Documentation Site</td>
+                            <td class="component-status">
+                                <span class="status-label operational">
+                                    <span class="status-indicator operational"></span>稼働中
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="component-name">CDN & Edge Network</td>
+                            <td class="component-status">
+                                <span class="status-label operational">
+                                    <span class="status-indicator operational"></span>稼働中
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h2>過去のインシデント履歴</h2>
+                <div class="incident-history">
+                    <div class="incident-day">
+                        <div class="incident-date">2026年6月13日</div>
+                        <div class="no-incidents">この日のインシデントは報告されていません。</div>
+                    </div>
+
+                    <div class="incident-day">
+                        <div class="incident-date">2026年5月28日</div>
+                        <div class="incident-item">
+                            <div class="incident-title">APIレスポンスの遅延について</div>
+                            <div class="incident-update"><strong>完了</strong> - ネットワーク経路上のスパイクが解消され、APIのレスポンスタイムが正常値（120ms以下）に回復したことを確認しました。 (14:22 JST)</div>
+                            <div class="incident-update"><strong>監視中</strong> - 修正パッチを適用し、インフラトラフィックの監視を行っています。 (13:45 JST)</div>
+                            <div class="incident-update"><strong>調査中</strong> - 一部のリージョンにおいて、APIリクエストの応答に通常以上の時間がかかる事象を検知し、原因を調査しています。 (13:10 JST)</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <nav class="page-navigation" id="page-nav">
+                <a href="/contents/aboutus.html" class="nav-card">
+                    <span class="label">← 前へ</span>
+                    <span class="title">About Us</span>
+                </a>
+                <a href="#" class="nav-card next" style="opacity: 0.3; pointer-events: none;">
+                    <span class="label">次へ →</span>
+                    <span class="title">—</span>
+                </a>
+            </nav>
+
+        </main>
+    </div>
+
+    <script>
+        async function loadLayoutComponents() {
+            try {
+                const [sidebarRes, headerRes] = await Promise.all([
+                    fetch('/contents/layout/sidebar.html'),
+                    fetch('/contents/layout/header.html')
+                ]);
+                
+                document.getElementById('sidebar-placeholder').innerHTML = await sidebarRes.text();
+                document.getElementById('header-placeholder').innerHTML = await headerRes.text();
+
+                // status.htmlのサイドバーのアクティブ化
+                const activeLink = document.querySelector('.sidebar-link[href="/contents/status.html"]');
+                if (activeLink) activeLink.classList.add('active');
+
+                // 外部インポート後の開閉ボタン挙動のバインド修正
+                initializeSidebarToggle();
+
+                initializeSearch();
+
+            } catch (error) {
+                console.error('レイアウトコンポーネントの読み込みに失敗しました:', error);
+            }
+        }
+
+        // 動的に追加されたトグルボタン（三本線）とカスタムチェックボックスを確実に紐付ける処理
+        function initializeSidebarToggle() {
+            const toggleBtn = document.querySelector('.toggle-btn');
+            const checkbox = document.getElementById('sidebar-toggle');
+            
+            if (toggleBtn && checkbox) {
+                toggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    checkbox.checked = !checkbox.checked;
+                });
+            }
+        }
+
+        function initializeSearch() {
+            const searchInput = document.getElementById('doc-search');
+            const clearBtn = document.getElementById('search-clear');
+            const sections = document.querySelectorAll('main.main-content section');
+            const noResults = document.getElementById('no-results');
+            const pageNav = document.getElementById('page-nav');
+
+            if (!searchInput) return;
+
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                clearBtn.style.display = query ? 'block' : 'none';
+                let visibleSectionsCount = 0;
+
+                sections.forEach(section => {
+                    const text = section.textContent.toLowerCase();
+                    const id = section.getAttribute('id');
+                    const matchingSidebarItem = document.querySelector(`.sidebar-item[data-target="${id}"]`);
+
+                    if (text.includes(query)) {
+                        section.classList.remove('is-hidden');
+                        if (matchingSidebarItem) matchingSidebarItem.classList.remove('is-hidden');
+                        visibleSectionsCount++;
+                    } else {
+                        section.classList.add('is-hidden');
+                        if (matchingSidebarItem) matchingSidebarItem.classList.add('is-hidden');
+                    }
+                });
+
+                if (visibleSectionsCount === 0) {
+                    noResults.style.display = 'block';
+                    pageNav.style.display = 'none';
+                } else {
+                    noResults.style.display = 'none';
+                    pageNav.style.display = (query === '') ? 'grid' : 'none'; 
+                }
+            });
+
+            clearBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+                searchInput.focus();
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', loadLayoutComponents);
+    </script>
+</body>
+</html>
