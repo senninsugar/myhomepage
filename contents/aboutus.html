@@ -325,6 +325,30 @@
             color: #ffffff;
         }
 
+        /* --- 8. サイドバー開閉CSS連動設定 --- */
+        .close-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 85; 
+            background: transparent;
+        }
+
+        #sidebar-toggle:checked ~ .sidebar {
+            transform: translateX(0);
+        }
+
+        #sidebar-toggle:checked ~ .main-container {
+            margin-left: var(--sidebar-width);
+        }
+
+        #sidebar-toggle:checked ~ .close-overlay {
+            display: block;
+        }
+
         @media (max-width: 1024px) {
             #sidebar-toggle:checked ~ .main-container {
                 margin-left: 0; 
@@ -407,10 +431,27 @@
                 const activeLink = document.querySelector('.sidebar-link[href="/contents/aboutus.html"]');
                 if (activeLink) activeLink.classList.add('active');
 
+                // 外部インポート後の開閉ボタン挙動のバインド修正
+                initializeSidebarToggle();
+
                 initializeSearch();
 
             } catch (error) {
                 console.error('レイアウトコンポーネントの読み込みに失敗しました:', error);
+            }
+        }
+
+        // 動的に追加されたトグルボタン（三本線）とカスタムチェックボックスを確実に紐付ける処理
+        function initializeSidebarToggle() {
+            const toggleBtn = document.querySelector('.toggle-btn');
+            const checkbox = document.getElementById('sidebar-toggle');
+            
+            if (toggleBtn && checkbox) {
+                // ボタンクリック時にチェックボックスを反転させてCSS連動を起こす
+                toggleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    checkbox.checked = !checkbox.checked;
+                });
             }
         }
 
